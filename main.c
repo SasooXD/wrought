@@ -3,40 +3,46 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <math.h>
-#include "portaudio.h"
+#include <portaudio.h>
 
 #define SAMPLE_RATE 44100
 #define FRAMES_PER_BUFFER 64
 #define FREQ 440.0
 
-typedef struct {
+typedef struct
+{
 	float phase;
 } paTestData;
 
 // Silences stderr
-void suppress_stderr(void) {
+void suppress_stderr(void)
+{
 	int devnull = open("/dev/null", O_WRONLY);
-	if (devnull != -1) {
+
+	if (devnull != -1)
+	{
 		dup2(devnull, STDERR_FILENO);
 		close(devnull);
 	}
 }
 
-// Callback PortAudio
-static int paCallback(const void *inputBuffer, void *outputBuffer,
-		unsigned long framesPerBuffer,
-		const PaStreamCallbackTimeInfo* timeInfo,
-		PaStreamCallbackFlags statusFlags,
-		void *userData) {
-	paTestData *data = (paTestData*)userData;
-	float *out = (float*)outputBuffer;
+// PortAudio main callback
+static int paCallback(const void* inputBuffer, void* outputBuffer,
+						unsigned long framesPerBuffer,
+						const PaStreamCallbackTimeInfo* timeInfo,
+						PaStreamCallbackFlags statusFlags,
+						void* userData)
+{
+	paTestData* data = (paTestData*)userData;
+	float* out = (float*)outputBuffer;
 	unsigned long i;
 
 	(void)inputBuffer;
 	(void)timeInfo;
 	(void)statusFlags;
 
-	for (i = 0; i < framesPerBuffer; i++) {
+	for (i = 0; i < framesPerBuffer; i++)
+	{
 		*out++ = (float)sin(2.0 * M_PI * FREQ * data->phase / SAMPLE_RATE);
 		data->phase += 1.0;
 
@@ -46,10 +52,11 @@ static int paCallback(const void *inputBuffer, void *outputBuffer,
 	return paContinue;
 }
 
-int main(void) {
-	suppress_stderr();	// To shut up ALSA
+int main(void)
+{
+	suppress_stderr(); // To make ALSA shut up
 
-	PaStream *stream;
+	PaStream* stream;
 	PaError err;
 	paTestData data = {0};
 
@@ -81,8 +88,8 @@ int main(void) {
 	Pa_Terminate();
 	return 0;
 
-error:
-	fprintf(stderr, "PortAudio error: %s\n", Pa_GetErrorText(err));
-	Pa_Terminate();
-	return 1;
+	error:
+		fprintf(stderr, "PortAudio error: %s\n", Pa_GetErrorText(err));
+		Pa_Terminate();
+		return 1;
 }
